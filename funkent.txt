@@ -1,9 +1,0 @@
-<hrml>
-	<head>
-	<title>mr.kent</font size="9"></title>
-	</head>
-	<body>
-	<h1 align="center"><font size="9">Все видео</font size="9"></h1>
-	
-	</body>
-</hrml>
