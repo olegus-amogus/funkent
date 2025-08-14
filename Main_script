@@ -32,7 +32,7 @@ local function createButton(name, parent)
 end
 local buttonsHolder = Instance.new("Frame")
 buttonsHolder.Name = "ButtonsHolder"
-buttonsHolder.Size = UDim2.new(1, -20, 1, -20)
+buttonsHolder.Size = UDim2.new(1, -20, 1, -12)
 buttonsHolder.Position = UDim2.new(0, 10, 0, 10)
 buttonsHolder.BackgroundTransparency = 1
 buttonsHolder.Parent = frame
