@@ -97,18 +97,39 @@ do
                 end
             end)
         end
-    end) frame.InputChanged:Connect(function(input)
+    end) 
 
-if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            lastInput = input
-        end end)RunService.RenderStepped:Connect(function()
-        if dragging and lastInput then
-            local delta = lastInput.Position - dragStart
-            local newXOffset = startPos.X.Offset + delta.X
-            local newYOffset = startPos.Y.Offset + delta.Y
-            local candidate = UDim2.new(startPos.X.Scale, newXOffset, startPos.Y.Scale, newYOffset)
+-- Убрано ограничение по перемещению: просто возвращаем candidate без clampPosition
 
-          frame.Position = clampPosition(candidate)
-        end
-    end)
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+        lastInput = input
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        lastInput = input
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if dragging and lastInput then
+        local delta = lastInput.Position - dragStart
+        local newXOffset = startPos.X.Offset + delta.X
+        local newYOffset = startPos.Y.Offset + delta.Y
+        local candidate = UDim2.new(startPos.X.Scale, newXOffset, startPos.Y.Scale, newYOffset)
+
+        -- без ограничения
+        frame.Position = candidate
+    end
+end)
 end
