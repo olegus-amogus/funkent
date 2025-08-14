@@ -1,0 +1,114 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "RiseGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+local frame = Instance.new("Frame")
+frame.Name = "MainFrame"
+frame.Size = UDim2.new(0, 120, 0, 360) -- поменял размеры: теперь вертикальная полоса
+frame.Position = UDim2.new(0.5, -60, 0.5, -180)
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BackgroundTransparency = 0.05
+frame.Parent = screenGui
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 8)
+uiCorner.Parent = frame
+local function createButton(name, parent)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.BackgroundColor3 = Color3.fromRGB(70, 130, 240)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 18
+    btn.Text = name
+    btn.Parent = parent
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+    return btn
+end
+local buttonsHolder = Instance.new("Frame")
+buttonsHolder.Name = "ButtonsHolder"
+buttonsHolder.Size = UDim2.new(1, -20, 1, -20)
+buttonsHolder.Position = UDim2.new(0, 10, 0, 10)
+buttonsHolder.BackgroundTransparency = 1
+buttonsHolder.Parent = frame
+local buttons = {}
+for i = 1, 4 do
+    buttons[i] = createButton("Button"..i, buttonsHolder)
+end
+local rows = 4
+local spacingY = 10
+local function layoutButtons()
+    local holderAbsSize = buttonsHolder.AbsoluteSize
+    if holderAbsSize.X <= 0 or holderAbsSize.Y <= 0 then return end
+    local btnWidth = holderAbsSize.X
+    local btnHeight = (holderAbsSize.Y - spacingY * (rows - 1)) / rows
+    for i, btn in ipairs(buttons) do
+        local row = i - 1
+        local y = row * (btnHeight + spacingY)
+        btn.Size = UDim2.new(0, math.floor(btnWidth), 0, math.floor(btnHeight))
+        btn.Position = UDim2.new(0, 0, 0, math.floor(y))
+    end
+end
+buttonsHolder:GetPropertyChangedSignal("AbsoluteSize"):Connect(layoutButtons)
+frame:GetPropertyChangedSignal("AbsoluteSize"):Connect(layoutButtons)
+layoutButtons()
+local btnActions = {
+    function() print("Button1 pressed") end,
+    function() print("Button2 pressed") end,
+    function() print("Button3 pressed") end,
+    function
+() print("Button4 pressed") 
+end,
+}      
+buttons[1].Text ="rise up"
+local url = "https://raw.githubusercontent.com/olegus-amogus/UpDown-Script/refs/heads/main/UpDown%20Script"
+btnActions[1] = function() loadstring(game:HttpGet(url))() end
+for i, btn in ipairs(buttons) do btn.MouseButton1Click:Connect(btnActions[i])
+end
+do
+    local dragging = false
+    local dragStart = Vector2.new()
+    local startPos = UDim2.new()
+    local lastInput
+    local function clampPosition(pos)
+        local screenSize = frame.Parent.AbsoluteSize
+        local x = pos.X.Offset
+        local y = pos.Y.Offset
+        local w = frame.AbsoluteSize.X
+        local h = frame.AbsoluteSize.Y
+        if x < 0 then x = 0 end
+        if y < 0 then y = 0 end
+        if x + w > screenSize.X then x = screenSize.X - w end
+        if y + h > screenSize.Y then y = screenSize.Y - h end
+        return UDim2.new(pos.X.Scale, x, pos.Y.Scale, y)
+    end frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            lastInput = input input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end) frame.InputChanged:Connect(function(input)
+
+if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            lastInput = input
+        end end)RunService.RenderStepped:Connect(function()
+        if dragging and lastInput then
+            local delta = lastInput.Position - dragStart
+            local newXOffset = startPos.X.Offset + delta.X
+            local newYOffset = startPos.Y.Offset + delta.Y
+            local candidate = UDim2.new(startPos.X.Scale, newXOffset, startPos.Y.Scale, newYOffset)
+
+          frame.Position = clampPosition(candidate)
+        end
+    end)
+end
