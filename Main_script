@@ -220,7 +220,7 @@ do
     local startPos = UDim2.new()
     local lastInput
     local function clampPosition(pos)
-        local screenSize frame.Parent.AbsoluteSize
+        local screenSize = frame.Parent.AbsoluteSize
         local x = pos.X.Offset
         local y = pos.Y.Offset
         local w = frame.AbsoluteSize.X
