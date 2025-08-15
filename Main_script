@@ -76,7 +76,7 @@ end,
 }
 btnActions[2] = function()
 screenGui.ResetOnSpawn = false
-local button = button[2]
+local button = buttons[2]
 local function createHighlightForCharacter(character, fillColor, fillTransparency, outlineTransparency)
     if not character then return nil end
     local existing = character:FindFirstChild("AutoTargetHighlight")
