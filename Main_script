@@ -191,9 +191,7 @@ local function setEnabled(state)
     end
 end
 
-button.MouseButton1Click:Connect(function()
-    setEnabled(not enabled)
-end)
+setEnabled(not enabled)
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
