@@ -2,6 +2,16 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local screenGui = Instance.new("ScreenGui")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RANGE = 100
+local UPDATE_RATE = 0.06
+local HIT_FILL_TRANSPARENCY = 0.3
+local HIT_OUTLINE_TRANSPARENCY = 0.6
+local OTHER_FILL_TRANSPARENCY = 0.6
+local OTHER_OUTLINE_TRANSPARENCY = 0.9
+local enabled = false
 screenGui.Name = "RiseGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
@@ -61,13 +71,39 @@ local btnActions = {
     function() print("Button1 pressed") end,
     function() print("Button2 pressed") end,
     function() print("Button3 pressed") end,
-    function
-() print("Button4 pressed") 
+    function() print("Button4 pressed") 
 end,
-}      
+}
+btnActions[2] = function()
+screenGui.ResetOnSpawn = false
+
+local function createHighlightForCharacter(character, fillColor, fillTransparency, outlineTransparency)
+    if not character then return nil end
+    local existing = character:FindFirstChild("AutoTargetHighlight")
+    if existing and existing:IsA("Highlight") then
+        existing.FillColor = fillColor
+        existing.FillTransparency = fillTransparency
+        existing.OutlineTransparency = outlineTransparency
+        return existing
+    end
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "AutoTargetHighlight"
+    highlight.Adornee = character
+    highlight.FillColor = fillColor
+    highlight.FillTransparency = fillTransparency
+    highlight.OutlineTransparency = outlineTransparency
+    highlight.Parent = character
+    return highlight
+end
+
+local function removeHighlightForCharacter(character)
+    if not character then return end
+    local h = char
+end
 buttons[1].Text ="rise up"
 local url = "https://raw.githubusercontent.com/olegus-amogus/UpDown-Script/refs/heads/main/UpDown%20Script"
 btnActions[1] = function() loadstring(game:HttpGet(url))() end
+
 for i, btn in ipairs(buttons) do btn.MouseButton1Click:Connect(btnActions[i])
 end
 do
@@ -76,7 +112,7 @@ do
     local startPos = UDim2.new()
     local lastInput
     local function clampPosition(pos)
-        local screenSize = frame.Parent.AbsoluteSize
+        local screenSize frame.Parent.AbsoluteSize
         local x = pos.X.Offset
         local y = pos.Y.Offset
         local w = frame.AbsoluteSize.X
