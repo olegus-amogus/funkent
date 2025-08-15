@@ -74,7 +74,7 @@ local btnActions = {
     function() print("Button4 pressed") 
 end,
 }
-buttons[2].Text = "Enable esp"
+buttons[2].Text ="Enable esp"
 btnActions[2] = function()
 screenGui.ResetOnSpawn = false
 local button = buttons[2]
