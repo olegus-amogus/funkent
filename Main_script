@@ -74,6 +74,7 @@ local btnActions = {
     function() print("Button4 pressed") 
 end,
 }
+buttons[2].Text = "Enable esp"
 btnActions[2] = function()
 screenGui.ResetOnSpawn = false
 local button = buttons[2]
@@ -184,9 +185,9 @@ end)
 local function setEnabled(state)
     enabled = state
     if enabled then
-        button.Text = "Disable Highlight"
+        button.Text = "Disable esp"
     else
-        button.Text = "Enable Highlight"
+        button.Text = "Enable esp"
         clearAllHighlights()
     end
 end
