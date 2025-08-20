@@ -77,8 +77,7 @@ end,
 buttons[3].Text =brainrot esp/fast steal
 buttons[2].Text ="Enable esp"
 btnActions[3] = function()
-loadstring(game:HttpGet("https://gist.githubusercontent.com/UCT-hub/5b11d10386f1b8ce08feb803861e0b79/raw/b2917b398d4b0cc80fb2aca73a3137ba494ebcf0/gistfile1.txt"))()
-end
+loadstring(game:HttpGet("https://gist.githubusercontent.com/UCT-hub/5b11d10386f1b8ce08feb803861e0b79/raw/b2917b398d4b0cc80fb2aca73a3137ba494ebcf0/gistfile1.txt"))() end
 btnActions[2] = function()
 screenGui.ResetOnSpawn = false
 local button = buttons[2]
