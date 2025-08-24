@@ -177,6 +177,9 @@ local function riseWithAntiGravity(dist, duration)
         end
     end)
 end
+button.MouseButton1Click:Connect(function()
+    riseWithAntiGravity(RISE_DISTANCE, RISE_DURATION)
+end)
 end
 btnActions[2] = function()
 screenGui.ResetOnSpawn = false
