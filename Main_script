@@ -1,249 +1,152 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+
 local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+
 local screenGui = Instance.new("ScreenGui")
-local UserInputService = game:GetService("UserInputService")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-local RANGE = 100
-local UPDATE_RATE = 0.06
-local HIT_FILL_TRANSPARENCY = 0.3
-local HIT_OUTLINE_TRANSPARENCY = 0.6
-local OTHER_FILL_TRANSPARENCY = 0.6
-local OTHER_OUTLINE_TRANSPARENCY = 0.9
-local enabled = false
-screenGui.Name = "RiseGui"
-screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
+
 local frame = Instance.new("Frame")
-frame.Name = "MainFrame"
-frame.Size = UDim2.new(0, 120, 0, 220) -- поменял размеры: теперь вертикальная полоса
-frame.Position = UDim2.new(0.5, -60, 0.5, -180)
-frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Position = UDim2.new(0.5, -100, 0.5, -50)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.BackgroundTransparency = 0.05
+frame.Active = true
+frame.Draggable = true
 frame.Parent = screenGui
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 8)
-uiCorner.Parent = frame
-local function createButton(name, parent)
-    local btn = Instance.new("TextButton")
-    btn.Name = name
-    btn.BackgroundColor3 = Color3.fromRGB(70, 130, 240)
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 18
-    btn.Text = name
-    btn.Parent = parent
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = btn
-    return btn
-end
-local buttonsHolder = Instance.new("Frame")
-buttonsHolder.Name = "ButtonsHolder"
-buttonsHolder.Size = UDim2.new(1, -20, 1, -20)
-buttonsHolder.Position = UDim2.new(0, 10, 0, 10)
-buttonsHolder.BackgroundTransparency = 1
-buttonsHolder.Parent = frame
-local buttons = {}
-for i = 1, 4 do
-    buttons[i] = createButton("Button"..i, buttonsHolder)
-end
-local rows = 4
-local spacingY = 10
-local function layoutButtons()
-    local holderAbsSize = buttonsHolder.AbsoluteSize
-    if holderAbsSize.X <= 0 or holderAbsSize.Y <= 0 then return end
-    local btnWidth = holderAbsSize.X
-    local btnHeight = (holderAbsSize.Y - spacingY * (rows - 1)) / rows
-    for i, btn in ipairs(buttons) do
-        local row = i - 1
-        local y = row * (btnHeight + spacingY)
-        btn.Size = UDim2.new(0, math.floor(btnWidth), 0, math.floor(btnHeight))
-        btn.Position = UDim2.new(0, 0, 0, math.floor(y))
+
+local buttonUp = Instance.new("TextButton")
+buttonUp.Size = UDim2.new(0, 180, 0, 40)
+buttonUp.Position = UDim2.new(0, 10, 0, 10)
+buttonUp.Text = "Поднять вверх"
+buttonUp.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+buttonUp.Parent = frame
+
+local button2 = Instance.new("TextButton")
+button2.Size = UDim2.new(0, 180, 0, 40)
+button2.Position = UDim2.new(0, 10, 0, 55)
+button2.Text = "Включить хитбоксы"
+button2.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+button2.Parent = frame
+
+local maxLiftDistance = 25 -- максимальное расстояние подъёма  
+local speed = 30
+local lifting = false
+local connection
+
+buttonUp.MouseButton1Click:Connect(function()
+  if lifting then return end
+  lifting = true
+
+  local startY = hrp.Position.Y
+  local targetY = startY + maxLiftDistance
+
+  local bv = hrp:FindFirstChild("LiftVelocity")
+  if not bv then
+    bv = Instance.new("BodyVelocity")
+    bv.Name = "LiftVelocity"
+    bv.MaxForce = Vector3.new(0, 1e5, 0)
+    bv.Velocity = Vector3.new(0, speed, 0)
+    bv.Parent = hrp
+  end
+
+  connection = RunService.Heartbeat:Connect(function(dt)
+    if not hrp or not hrp.Parent then
+      lifting = false
+      connection:Disconnect()
+      if bv and bv.Parent then bv:Destroy() end
+      return
+    end
+
+    local posY = hrp.Position.Y
+
+    if posY >= targetY or (posY - startY) >= maxLiftDistance-0.1 then
+      lifting = false
+      connection:Disconnect()
+      if bv and bv.Parent then bv:Destroy() end
+      return
+    end
+
+    local diff = targetY - posY
+    bv.Velocity = Vector3.new(0, math.clamp(speed, 0, diff * 5), 0)
+    if not lifting then
+      if bv and bv.Parent then
+        bv.Velocity = Vector3.new(0,0,0)
+        bv:Destroy()
+      end
+      if connection then
+        connection:Disconnect()
+      end
+      return
+    end
+  end)
+end)
+
+-- Хитбоксы
+
+local hitboxesEnabled = false
+local playerGui = player:WaitForChild("PlayerGui")
+local function clearHitboxes()
+    for _, adornment in ipairs(hrp:GetChildren()) do
+        if adornment:IsA("BoxHandleAdornment") and adornment.Name == "EnemyHitbox" then
+            adornment:Destroy()
+        end
     end
 end
-buttonsHolder:GetPropertyChangedSignal("AbsoluteSize"):Connect(layoutButtons)
-frame:GetPropertyChangedSignal("AbsoluteSize"):Connect(layoutButtons)
-layoutButtons()
-local btnActions = {
-    function() print("Button1 pressed") end,
-    function() print("Button2 pressed") end,
-    function() print("Button3 pressed") end,
-    function() print("Button4 pressed") 
-end,
-}
-buttons[3].Text = "idk"
-buttons[2].Text ="Enable esp"
-btnActions[1] = function() 
-local UserInputService = game:GetService("UserInputService")
-local player = Players.LocalPlayer
 
-local RISE_DISTANCE = 30
-local RISE_DURATION = 1.5
-local EASE_FUNC = function(t)
-    if t < 0.5 then
-        return 4 * t * t * t
+local function createHitboxForCharacter(char)
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local box = Instance.new("BoxHandleAdornment")
+    box.Name = "EnemyHitbox"
+    box.Adornee = root
+    box.Size = Vector3.new(4, 5, 4)
+    box.Transparency = 0.5
+    box.AlwaysOnTop = true
+    box.ZIndex = 5
+    box.Color3 = Color3.fromRGB(255, 0, 0)
+    box.Parent = hrp
+end
+
+local function addHitboxes()
+    clearHitboxes()
+    for _, otherPlayer in ipairs(Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            createHitboxForCharacter(otherPlayer.Character)
+        end
+    end
+end
+
+local function toggleHitboxes()
+    hitboxesEnabled = not hitboxesEnabled
+    if hitboxesEnabled then
+        button2.Text = "Выключить хитбоксы"
+        addHitboxes()
     else
-        local f = (2 * t - 2)
-        return 0.5 * f * f * f + 1
+        button2.Text = "Включить хитбоксы"
+        clearHitboxes()
     end
 end
-local isRising = false
-local function riseWithAntiGravity(dist, duration)
-    if isRising then return end
-    local character = player.Character or player.CharacterAdded:Wait()
-    local hrp = character:FindFirstChild("HumanoidRootPart")
-    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
-    if not hrp or not humanoid then
-        warn("Нет Humanoid или HumanoidRootPart")
-        return
+
+button2.MouseButton1Click:Connect(toggleHitboxes)
+
+-- Добавим обновление хитбоксов при новом появлении персонажей
+
+local function onCharacterAdded(char)
+    if hitboxesEnabled then
+        wait(1) -- даём время загрузиться HRP
+        addHitboxes()
     end
-
-    isRising = true
-
-    local attachment = Instance.new("Attachment")
-    attachment.Name = "RiseAttachment"
-    attachment.Parent = hrp
-
-    local vectorForce = Instance.new("VectorForce")
-    vectorForce.Name = "RiseForce"
-    vectorForce.Attachment0 = attachment
-    vectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
-    vectorForce.ApplyAtCenterOfMass = true
-    vectorForce.Parent = hrp
-
-    local mass = 0
-    for _, part in ipairs(character:GetDescendants()) do
-        if part:IsA("BasePart") then
-            mass = mass + part:GetMass()
-        end
-    end
-    if mass <= 0 then mass = 1 end
-
-    local gravity = workspace.Gravity
-    local startY = hrp.Position.Y
-    local elapsed = 0
-    local prevY = hrp.Position.Y
-
-    local conn
-    conn = RunService.RenderStepped:Connect(function(dt)
-        if not hrp or not hrp.Parent then
-            conn:Disconnect()
-            if vectorForce and vectorForce.Parent then vectorForce:Destroy() end
-            if attachment and attachment.Parent then attachment:Destroy() end
-            isRising = false
-            return
-        end
-
-        elapsed = math.min(elapsed + dt, duration)
-        local t = elapsed / duration
-        local alpha = EASE_FUNC(t)
-
-        local alpha_prev = EASE_FUNC(math.max(0, (elapsed - dt) / duration))
-        local v_target = (alpha - alpha_prev) * dist / math.max(dt, 1e-6)
-
-        local currentV = (hrp.Position.Y - prevY) / math.max(dt, 1e-6)
-
-        local kP = 40
-        local accel_req = kP * (v_target - currentV)
-
-        local forceY = mass * (accel_req + gravity)
-
-        vectorForce.Force = Vector3.new(0, forceY, 0)
-
-        prevY = hrp.Position.Y
-
-        if elapsed >= duration then
-            conn:Disconnect()
-            -- плавное уменьшение силы
-            local fadeTime = 0.15
-            local fadeElapsed = 0
-            local initialForceY = forceY
-            local fadeConn
-            fadeConn = RunService.RenderStepped:Connect(function(dt2)
-                fadeElapsed = math.min(fadeElapsed + dt2, fadeTime)
-                local f = 1 - (fadeElapsed / fadeTime)
-                vectorForce.Force = Vector3.new(0, initialForceY * f, 0)
-                if fadeElapsed >= fadeTime then
-                    fadeConn:Disconnect()
-                    if vectorForce and vectorForce.Parent then vectorForce:Destroy() end
-                    if attachment and attachment.Parent then attachment:Destroy() end
-                    isRising = false
-                end
-
-            end)
-        end
-    end)
-end
-buttons[1].MouseButton1Click:Connect(function()
-    riseWithAntiGravity(RISE_DISTANCE, RISE_DURATION)
-end)
 end
 
-for i, btn in ipairs(buttons) do btn.MouseButton1Click:Connect(btnActions[i])
-end
-do
-    local dragging = false
-    local dragStart = Vector2.new()
-    local startPos = UDim2.new()
-    local lastInput
-    local function clampPosition(pos)
-        local screenSize = frame.Parent.AbsoluteSize
-        local x = pos.X.Offset
-        local y = pos.Y.Offset
-        local w = frame.AbsoluteSize.X
-        local h = frame.AbsoluteSize.Y
-        if x < 0 then x = 0 end
-        if y < 0 then y = 0 end
-        if x + w > screenSize.X then x = screenSize.X - w end
-        if y + h > screenSize.Y then y = screenSize.Y - h end
-        return UDim2.new(pos.X.Scale, x, pos.Y.Scale, y)
-    end frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-            lastInput = input input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end) 
-
--- Убрано ограничение по перемещению: просто возвращаем candidate без clampPosition
-
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
-        lastInput = input
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
+Players.PlayerAdded:Connect(function(plr)
+    plr.CharacterAdded:Connect(onCharacterAdded)
 end)
-
-frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        lastInput = input
+for _, plr in ipairs(Players:GetPlayers()) do
+    if plr.Character then
+        plr.CharacterAdded:Connect(onCharacterAdded)
     end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if dragging and lastInput then
-        local delta = lastInput.Position - dragStart
-        local newXOffset = startPos.X.Offset + delta.X
-        local newYOffset = startPos.Y.Offset + delta.Y
-        local candidate = UDim2.new(startPos.X.Scale, newXOffset, startPos.Y.Scale, newYOffset)
-
-        -- без ограничения
-        frame.Position = candidate
-    end
-end)
 end
