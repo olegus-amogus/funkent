@@ -74,9 +74,97 @@ local btnActions = {
     function() print("Button4 pressed") 
 end,
 }
-buttons[3].Text = "brainrot esp/fast steal"
+buttons[3].Text = "rise up test"
 buttons[2].Text ="Enable esp"
-btnActions[3] = function() loadstring(game:HttpGet("https://pastefy.app/O0LXMwBW/raw", true))() end
+btnActions[3] = function() 
+local isRising = false
+local function riseWithAntiGravity(dist, duration)
+    if isRising then return end
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+    if not hrp or not humanoid then
+        warn("Нет Humanoid или HumanoidRootPart")
+        return
+    end
+
+    isRising = true
+
+    local attachment = Instance.new("Attachment")
+    attachment.Name = "RiseAttachment"
+    attachment.Parent = hrp
+
+    local vectorForce = Instance.new("VectorForce")
+    vectorForce.Name = "RiseForce"
+    vectorForce.Attachment0 = attachment
+    vectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
+    vectorForce.ApplyAtCenterOfMass = true
+    vectorForce.Parent = hrp
+
+    local mass = 0
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            mass = mass + part:GetMass()
+        end
+    end
+    if mass <= 0 then mass = 1 end
+
+    local gravity = workspace.Gravity
+    local startY = hrp.Position.Y
+    local elapsed = 0
+    local prevY = hrp.Position.Y
+
+    local conn
+    conn = RunService.RenderStepped:Connect(function(dt)
+        if not hrp or not hrp.Parent then
+            conn:Disconnect()
+            if vectorForce and vectorForce.Parent then vectorForce:Destroy() end
+            if attachment and attachment.Parent then attachment:Destroy() end
+            isRising = false
+            return
+        end
+
+        elapsed = math.min(elapsed + dt, duration)
+        local t = elapsed / duration
+        local alpha = EASE_FUNC(t)
+
+        local alpha_prev = EASE_FUNC(math.max(0, (elapsed - dt) / duration))
+        local v_target = (alpha - alpha_prev) * dist / math.max(dt, 1e-6)
+
+        local currentV = (hrp.Position.Y - prevY) / math.max(dt, 1e-6)
+
+        local kP = 40
+        local accel_req = kP * (v_target - currentV)
+
+        local forceY = mass * (accel_req + gravity)
+
+        vectorForce.Force = Vector3.new(0, forceY, 0)
+
+        prevY = hrp.Position.Y
+
+        if elapsed >= duration then
+            conn:Disconnect()
+            -- плавное уменьшение силы
+            local fadeTime = 0.15
+            local fadeElapsed = 0
+            local initialForceY = forceY
+            local fadeConn
+            fadeConn = RunService.RenderStepped:Connect(function(dt2)
+                fadeElapsed = math.min(fadeElapsed + dt2, fadeTime)
+                local f = 1 - (fadeElapsed / fadeTime)
+                vectorForce.Force = Vector3.new(0, initialForceY * f, 0)
+                if fadeElapsed >= fadeTime then
+                    fadeConn:Disconnect()
+                    if vectorForce and vectorForce.Parent then vectorForce:Destroy() end
+                    if attachment and attachment.Parent then attachment:Destroy() end
+                    isRising = false
+                end
+
+            end)
+        end
+    end)
+end
+end
 btnActions[2] = function()
 screenGui.ResetOnSpawn = false
 local button = buttons[2]
