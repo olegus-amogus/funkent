@@ -77,6 +77,19 @@ end,
 buttons[3].Text = "rise up test"
 buttons[2].Text ="Enable esp"
 btnActions[3] = function() 
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+local RISE_DISTANCE = 30
+local RISE_DURATION = 1.5
+local EASE_FUNC = function(t)
+    if t < 0.5 then
+        return 4 * t * t * t
+    else
+        local f = (2 * t - 2)
+        return 0.5 * f * f * f + 1
+    end
+end
 local isRising = false
 local function riseWithAntiGravity(dist, duration)
     if isRising then return end
