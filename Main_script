@@ -74,9 +74,9 @@ local btnActions = {
     function() print("Button4 pressed") 
 end,
 }
-buttons[3].Text = "rise up test"
+buttons[3].Text = "idk"
 buttons[2].Text ="Enable esp"
-btnActions[3] = function() 
+btnActions[1] = function() 
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 
@@ -177,145 +177,10 @@ local function riseWithAntiGravity(dist, duration)
         end
     end)
 end
-button.MouseButton1Click:Connect(function()
+buttons[1].MouseButton1Click:Connect(function()
     riseWithAntiGravity(RISE_DISTANCE, RISE_DURATION)
 end)
 end
-btnActions[2] = function()
-screenGui.ResetOnSpawn = false
-local button = buttons[2]
-local function createHighlightForCharacter(character, fillColor, fillTransparency, outlineTransparency)
-    if not character then return nil end
-    local existing = character:FindFirstChild("AutoTargetHighlight")
-    if existing and existing:IsA("Highlight") then
-        existing.FillColor = fillColor
-        existing.FillTransparency = fillTransparency
-        existing.OutlineTransparency = outlineTransparency
-        return existing
-    end
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "AutoTargetHighlight"
-    highlight.Adornee = character
-    highlight.FillColor = fillColor
-    highlight.FillTransparency = fillTransparency
-    highlight.OutlineTransparency = outlineTransparency
-    highlight.Parent = character
-    return highlight
-end
-
-local function removeHighlightForCharacter(character)
-    if not character then return end
-    local h = character:FindFirstChild("AutoTargetHighlight")
-    if h and h:IsA("Highlight") then
-        h:Destroy()
-    end
-end
-
-local function playerFromPart(part)
-    if not part then return nil end
-    local model = part:FindFirstAncestorOfClass("Model")
-    if not model then return nil end
-    local humanoid = model:FindFirstChildOfClass("Humanoid")
-    if not humanoid then return nil end
-    return Players:GetPlayerFromCharacter(model)
-end
-
-local function updateHighlights(targetPlayer)
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character.Parent then
-            local char = player.Character
-            if player == targetPlayer then
-                createHighlightForCharacter(char, Color3.fromRGB(0,255,0), HIT_FILL_TRANSPARENCY, HIT_OUTLINE_TRANSPARENCY)
-            else
-                createHighlightForCharacter(char, Color3.fromRGB(255,0,0), OTHER_FILL_TRANSPARENCY, OTHER_OUTLINE_TRANSPARENCY)
-            end
-        end
-    end
-end
-
-local function clearAllHighlights()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player.Character then
-            removeHighlightForCharacter(player.Character)
-        end
-    end
-end
-
-local function onCharacterAdded(player, character)
-    removeHighlightForCharacter(character)
-end
-
-for _, p in ipairs(Players:GetPlayers()) do
-    p.CharacterAdded:Connect(function(char) onCharacterAdded(p, char) end)
-end
-Players.PlayerAdded:Connect(function(p) p.CharacterAdded:Connect(function(char) onCharacterAdded(p, char) end) end)
-Players.PlayerRemoving:Connect(function(p) if p.Character then removeHighlightForCharacter(p.Character) end end)
-
--- Луч из центра экрана и основной цикл
-
-local lastTime = 0
-RunService.RenderStepped:Connect(function(dt)
-    lastTime = lastTime + dt
-    if lastTime < UPDATE_RATE then return end
-    lastTime = 0
-
-    if not enabled then return end
-    if not Camera then return end
-
-    local viewportSize = Camera.ViewportSize
-    local screenPoint = Vector2.new(viewportSize.X/2, viewportSize.Y/2)
-    local unitRay = Camera:ScreenPointToRay(screenPoint.X, screenPoint.Y)
-    local origin = unitRay.Origin
-    local direction = unitRay.Direction * RANGE
-
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-    if LocalPlayer.Character then
-        raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-    end
-    raycastParams.IgnoreWater = true
-
-    local result = workspace:Raycast(origin, direction, raycastParams)
-
-    local targetedPlayer = nil
-    if result and result.Instance then
-        targetedPlayer = playerFromPart(result.Instance)
-        if targetedPlayer == LocalPlayer then
-            targetedPlayer = nil
-        end
-    end
-
-    updateHighlights(targetedPlayer)
-end)
-
-local function setEnabled(state)
-    enabled = state
-    if enabled then
-        button.Text = "Disable esp"
-    else
-        button.Text = "Enable esp"
-        clearAllHighlights()
-    end
-end
-
-setEnabled(not enabled)
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.H then
-        setEnabled(not enabled)
-    end
-end)
-
-LocalPlayer.AncestryChanged:Connect(function(_, parent)
-    if not parent then
-        clearAllHighlights()
-    end
-end)
-end
-buttons[1].Text ="rise up"
-local url = "https://raw.githubusercontent.com/olegus-amogus/UpDown-Script/refs/heads/main/UpDown%20Script"
-btnActions[1] = function() loadstring(game:HttpGet(url))() end
 
 for i, btn in ipairs(buttons) do btn.MouseButton1Click:Connect(btnActions[i])
 end
